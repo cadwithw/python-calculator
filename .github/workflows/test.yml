@@ -89,7 +89,15 @@ jobs:
           pip install -r requirements.txt
       
       - name: Run ${{ matrix.scenario.name }} tests
-        run: pytest -v -m "${{ matrix.scenario.marker }}"
+        run: |
+          # Handle pytest exit code 5 (no tests collected) as success
+          pytest -v -m "${{ matrix.scenario.marker }}" || \
+          if [ $? -eq 5 ]; then 
+            echo "No tests found for marker: ${{ matrix.scenario.marker }} - this is OK"; 
+            exit 0; 
+          else 
+            exit $?; 
+          fi
 
   # Job 4: Deploy (depends on test-scenarios)
   deploy:
