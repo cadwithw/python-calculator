@@ -74,3 +74,4 @@ def test_performance_multiple_operations():
     for i in range(1000):
         result = add(result, i)
     assert result == sum(range(1000))
+    
