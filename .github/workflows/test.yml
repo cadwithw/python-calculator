@@ -100,19 +100,28 @@ jobs:
           path: .coverage
   
   # Job 4: Deploy (depends on test)
-  deploy:
-  name: Deploy to Production
-  needs: [lint, test]
-  runs-on: ubuntu-latest
-  if: |
-    github.ref == 'refs/heads/main' &&
-    github.event_name == 'push' &&
-    success()
-  
-  steps:
-    - name: Simulate deployment
-      run: |
-        echo "Deploying to production..."
-        echo "Environment: Production"
-        echo "Version: ${{ github.sha }}"
+    deploy:
+    name: Deploy to Production
+    needs: [lint, build, test]
+    runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      success()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+      
+      - name: Simulate deployment
+        run: |
+          echo "Deploying to production..."
+          echo "Environment: Production"
+          echo "Version: ${{ github.sha }}"
 
