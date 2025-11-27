@@ -2,7 +2,7 @@
 
 def add(a, b):
     """Return the sum of two numbers."""
-    return a - b
+    return a + b
 
 def subtract(a, b):
     """Return the difference of two numbers."""
@@ -17,3 +17,7 @@ def divide(a, b):
     if b == 0:
         raise ValueError("Cannot divide by zero")
     return a / b
+
+def power(a, b):
+    """Return a raised to the power of b."""
+    return a ** b
