@@ -1,7 +1,4 @@
 # calculator.py
-import os
-
-
 
 def add(a, b):
     """Return the sum of two numbers."""
