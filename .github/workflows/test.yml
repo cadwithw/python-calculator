@@ -1,4 +1,4 @@
-name: Run Tests with Caching
+name: Build and Test
 
 on:
   push:
@@ -7,8 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Test Calculator
+  # Job 1: Build and package
+  build:
+    name: Build Package
     runs-on: ubuntu-latest
     
     steps:
@@ -20,7 +21,39 @@ jobs:
         with:
           python-version: '3.11'
       
-      # Cache pip dependencies
+      - name: Install build tools
+        run: pip install build
+      
+      - name: Build distribution packages
+        run: python -m build
+      
+      # Upload the built package as an artifact
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 7
+  
+  # Job 2: Test (depends on build)
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: build  # This job waits for 'build' to complete
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -35,4 +68,38 @@ jobs:
           pip install -r requirements.txt
       
       - name: Run pytest
-        run: pytest -v
+        run: pytest -v -s
+  
+  # Job 3: Deploy (depends on test)
+  deploy:
+    name: Deploy Package
+    runs-on: ubuntu-latest
+    needs: test  # This job waits for all 'test' jobs to complete
+    if: github.ref == 'refs/heads/main'  # Only deploy on main branch
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Download the artifact from the build job
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+      
+      - name: Display downloaded files
+        run: ls -la dist/
+      
+      - name: Simulate deployment
+        run: echo "Deploying package to production..."
+
+      - name: Run tests with coverage
+        run: pytest -v --cov=calculator --cov-report=term-missing
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: .coverage
+
